@@ -3,7 +3,7 @@ import axiosInstance from "@/lib/axios";
 export const productService = {
   getProducts: async (params = {}) => {
     try {
-      const response = await axiosInstance.get("/api/product", { params });
+      const response = await axiosInstance.get("/product", { params });
       return response.data;
     } catch (error) {
       console.log(error);
@@ -15,7 +15,7 @@ export const productService = {
   // Get single product by ID
   getProductById: async (id: string) => {
     try {
-      const response = await axiosInstance.get(`/api/product/${id}`);
+      const response = await axiosInstance.get(`/product/${id}`);
       return response.data;
     } catch (error) {
       console.log(error);
@@ -26,7 +26,7 @@ export const productService = {
   // Get product categories
   getCategories: async () => {
     try {
-      const response = await axiosInstance.get("/api/product/category");
+      const response = await axiosInstance.get("/product/category");
       return response.data;
     } catch (error) {
       console.log(error);

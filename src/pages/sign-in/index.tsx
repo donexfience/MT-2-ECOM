@@ -42,7 +42,7 @@ export default function CraxinnoLogin() {
     try {
       if (isSignup) {
         const signupData = data as SignupFormData;
-        const response = await axiosInstance.post("/api/auth/signup", {
+        const response = await axiosInstance.post("/auth/signup", {
           email: signupData.email,
           password: signupData.password,
           username: signupData.username, 
@@ -56,7 +56,7 @@ export default function CraxinnoLogin() {
         }, 2000);
       } else {
         const loginData = data as LoginFormData;
-        const response = await axiosInstance.post("/api/auth/login", {
+        const response = await axiosInstance.post("/auth/login", {
           email: loginData.email,
           password: loginData.password,
         });
