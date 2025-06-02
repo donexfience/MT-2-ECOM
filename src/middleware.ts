@@ -7,7 +7,6 @@ const JWT_SECRET = new TextEncoder().encode(
 
 const protectedRoutes = ["/dashboard"];
 
-const publicRoutes = ["/sign-in", "/sign-up", "/"];
 
 async function verifyToken(token: string): Promise<boolean> {
   try {
@@ -30,8 +29,6 @@ export async function middleware(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some(
     (route) => pathname.startsWith(route) || pathname === route
   );
-
-  const isPublicRoute = publicRoutes.includes(pathname);
 
   if (!refreshToken) {
     if (isProtectedRoute) {

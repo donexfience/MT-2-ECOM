@@ -1,3 +1,6 @@
+import product from "@/models/product";
+import { IOrder } from "@/types/IOrder";
+import MailProductItem from "@/types/mailProduct";
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
@@ -10,20 +13,17 @@ const transporter = nodemailer.createTransport({
 });
 
 export const createSuccessEmailTemplate = (
-  order: any,
-  customer_name: any,
-  products: any
+  order: IOrder,
+  customer_name: string,
+  products: MailProductItem
 ) => {
-  const productList = products
-    .map(
-      (p: any) =>
-        `<li>${p.name || "Product"} - Quantity: ${p.quantity} - Price: $${
-          p.price
-        }</li>`
-    )
-    .join("");
+  const productList = `<li>${products.product_id || "Product"} - Quantity: ${
+    products.quantity
+  } - Price: $${products.price}</li>`;
+  console.log(order, product, "order in success");
 
   return `
+  
     <html>
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
         <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -56,10 +56,11 @@ export const createSuccessEmailTemplate = (
 };
 
 export const createFailureEmailTemplate = (
-  order: any,
-  customer_name: any,
-  reason: any
+  order: IOrder,
+  customer_name: string,
+  reason: string
 ) => {
+  console.log(order, product, "order in failure");
   return `
     <html>
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -89,10 +90,10 @@ export const createFailureEmailTemplate = (
 };
 
 // Send email function
-export const sendEmail = async (to: any, subject: any, htmlContent: any) => {
+export const sendEmail = async (to: string, subject: string, htmlContent: string) => {
   try {
     const mailOptions = {
-      from: 'streamrxyt@gmail.com',
+      from: "streamrxyt@gmail.com",
       to: to,
       subject: subject,
       html: htmlContent,
@@ -101,8 +102,8 @@ export const sendEmail = async (to: any, subject: any, htmlContent: any) => {
     const info = await transporter.sendMail(mailOptions);
     console.log("Email sent successfully:", info.messageId);
     return { success: true, messageId: info.messageId };
-  } catch (error: any) {
-    console.error("Error sending email:", error);
-    return { success: false, error: error.message };
+  } catch (error) {
+    console.log("Error sending email:", error);
+    return { success: false, error: error };
   }
 };

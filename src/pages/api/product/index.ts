@@ -1,5 +1,7 @@
 import dbConnect from "@/lib/dbConnect";
 import product from "@/models/product";
+import { IProduct } from "@/types/IOrder";
+import { FilterQuery } from "mongoose";
 import { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(
@@ -33,8 +35,7 @@ export default async function handler(
     const categoryValue = Array.isArray(category) ? category[0] : category;
     const searchValue = Array.isArray(search) ? search[0] : search;
 
-    const filter: any = { inStock: true };
-
+    const filter: FilterQuery<typeof product> = { inStock: true };
     if (categoryValue && categoryValue !== "All") {
       filter.category = categoryValue;
     }
@@ -56,16 +57,13 @@ export default async function handler(
     const sort: Record<string, number> = {};
     sort[sortField] = order === "desc" ? -1 : 1;
 
-    const products = await product.find(filter)
-      .skip(skip)
-      .limit(pageLimit)
+    const products = await product.find(filter).skip(skip).limit(pageLimit);
 
-    const totalProducts = await product
-      .countDocuments(filter);
+    const totalProducts = await product.countDocuments(filter);
 
     const totalPages = Math.ceil(totalProducts / pageLimit);
 
-    const transformedProducts = products.map((product: any) => ({
+    const transformedProducts = products.map((product: IProduct) => ({
       id: product._id.toString(),
       name: product.name,
       description: product.description,

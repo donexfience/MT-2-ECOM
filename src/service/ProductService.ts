@@ -5,10 +5,10 @@ export const productService = {
     try {
       const response = await axiosInstance.get("/api/product", { params });
       return response.data;
-    } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || "Failed to fetch products"
-      );
+    } catch (error) {
+      console.log(error);
+
+      throw new Error("Failed to fetch products");
     }
   },
 
@@ -17,10 +17,9 @@ export const productService = {
     try {
       const response = await axiosInstance.get(`/api/product/${id}`);
       return response.data;
-    } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || "Failed to fetch product"
-      );
+    } catch (error) {
+      console.log(error);
+      throw new Error("Failed to fetch product");
     }
   },
 
@@ -29,23 +28,23 @@ export const productService = {
     try {
       const response = await axiosInstance.get("/api/product/category");
       return response.data;
-    } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || "Failed to fetch categories"
-      );
+    } catch (error) {
+      console.log(error);
+
+      throw new Error("Failed to fetch categories");
     }
   },
 
   // Search products
-  searchProducts: async (searchTerm: any, filters = {}) => {
+  searchProducts: async (searchTerm: string, filters = {}) => {
     try {
       const params = { search: searchTerm, ...filters };
       const response = await axiosInstance.get("/products", { params });
       return response.data;
-    } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || "Failed to search products"
-      );
+    } catch (error) {
+      console.log(error);
+
+      throw new Error("Failed to search products");
     }
   },
 
@@ -55,10 +54,10 @@ export const productService = {
         params: { category, ...params },
       });
       return response.data;
-    } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || "Failed to fetch products by category"
-      );
+    } catch (error) {
+      console.log(error);
+
+      throw new Error("Failed to fetch products by category");
     }
   },
 };

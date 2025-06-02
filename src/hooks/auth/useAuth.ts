@@ -1,4 +1,5 @@
 import axiosInstance from "@/lib/axios";
+import { User } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface User {
@@ -6,6 +7,14 @@ interface User {
   email: string;
   username: string;
   _id: string;
+
+
+}
+
+interface Response {
+  data: {
+    user: User;
+  };
 }
 
 interface UseAuthReturn {
@@ -23,14 +32,15 @@ export function useAuth(): UseAuthReturn {
   useEffect(() => {
     async function fetchUser() {
       try {
-        const response: any = await axiosInstance.get("/api/auth/me");
+        const response: Response = await axiosInstance.get("/api/auth/me");
         if (response && response.data && response.data.user) {
           setUser(response.data.user);
         } else {
           setUser(null);
         }
       } catch (err) {
-        setError("Failed to fetch user");
+        console.log(err)
+        setError("Failed to fetch ");
         setUser(null);
       } finally {
         setLoading(false);

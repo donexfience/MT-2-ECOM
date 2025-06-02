@@ -1,19 +1,21 @@
 import { orderService } from "@/service/OrderService";
+import { IOrder } from "@/types/IOrder";
 import { useState, useEffect } from "react";
 
-export const useOrderDetails = (orderId: any) => {
-  const [order, setOrder] = useState<any>(null);
+export const useOrderDetails = (orderId: string) => {
+  const [order, setOrder] = useState<IOrder | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
     const fetchOrder = async () => {
       try {
         setLoading(true);
-        const data: any = await orderService.getOrder(orderId);
+        const data = (await orderService.getOrder(orderId)) as IOrder;
         setOrder(data);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        console.log(err);
+        setError("failed to fetch");
       } finally {
         setLoading(false);
       }

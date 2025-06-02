@@ -1,11 +1,23 @@
 import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form"; 
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Loginschema } from "../../../utils/LoginSchema";
 import { useRouter } from "next/router";
 import axiosInstance from "@/lib/axios";
 import { toast } from "react-fox-toast";
+import Image from "next/image";
+
+interface LoginFormData {
+  email: string;
+  password: string;
+}
+
+interface SignupFormData extends LoginFormData {
+  username: string;
+}
+
+type FormData = LoginFormData | SignupFormData;
 
 export default function CraxinnoLogin() {
   const [showPassword, setShowPassword] = useState(false);
@@ -20,19 +32,20 @@ export default function CraxinnoLogin() {
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm({
+  } = useForm<any>({
     resolver: yupResolver(Loginschema(isSignup)),
   });
 
-  const onSubmit = async (data: any) => {
+  const onSubmit: SubmitHandler<any> = async (data: FormData) => {
     setLoading(true);
 
     try {
       if (isSignup) {
+        const signupData = data as SignupFormData;
         const response = await axiosInstance.post("/api/auth/signup", {
-          email: data.email,
-          password: data.password,
-          username: data.username,
+          email: signupData.email,
+          password: signupData.password,
+          username: signupData.username, 
         });
 
         toast.success("Account created successfully! Please log in.");
@@ -42,9 +55,10 @@ export default function CraxinnoLogin() {
           reset();
         }, 2000);
       } else {
+        const loginData = data as LoginFormData;
         const response = await axiosInstance.post("/api/auth/login", {
-          email: data.email,
-          password: data.password,
+          email: loginData.email,
+          password: loginData.password,
         });
 
         toast.success("Login successful! Redirecting...");
@@ -53,21 +67,8 @@ export default function CraxinnoLogin() {
           router.push("/");
         }, 1000);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.log(err, "error of login");
-      toast.error(err.response.data.message);
-
-      if (err.response?.data?.message) {
-        toast.error(err.response.data.message);
-      } else if (err.response?.status === 409) {
-        toast.error("User already exists. Please try logging in.");
-      } else if (err.response?.status === 401) {
-        toast.error("Invalid email or password.");
-      } else if (err.code === "ECONNABORTED") {
-        toast.error("Request timeout. Please try again.");
-      } else {
-        toast.error("Something went wrong. Please try again.");
-      }
     } finally {
       setLoading(false);
     }
@@ -75,12 +76,15 @@ export default function CraxinnoLogin() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex w-full">
-      {/* left side image */}
       <div className="w-1/2 flex items-center justify-center bg-white">
-        <img src="Login/Login.jpg" className="w-[50%] h-[50%]" />
+        <Image
+          alt="logo"
+          height={100}
+          width={1000}
+          src="/Login/Login.jpg"
+          className="w-[50%] h-[50%]"
+        />
       </div>
-
-      {/* Right side - Login Form */}
       <div className="w-1/2 flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
@@ -93,11 +97,9 @@ export default function CraxinnoLogin() {
               {isSignup ? "Create Account" : "Welcome"}
             </h2>
             <h3 className="text-2xl font-bold text-gray-900">
-              {" "}
               {isSignup ? "Sign up for SalesGood" : "To SalesGood"}
             </h3>
           </div>
-
           <div className="space-y-6">
             <div>
               <form
@@ -118,12 +120,11 @@ export default function CraxinnoLogin() {
                     />
                     {errors.username && (
                       <p className="text-sm text-red-600 mt-1">
-                        {errors.username.message}
+                        {errors.username && typeof errors.username.message === "string" && errors.username.message}
                       </p>
                     )}
                   </div>
                 )}
-
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Email
@@ -139,7 +140,7 @@ export default function CraxinnoLogin() {
                     />
                     {errors.email && (
                       <p className="text-sm text-red-600 mt-1">
-                        {errors.email.message}
+                        {errors.email && typeof errors.email.message === "string" && errors.email.message}
                       </p>
                     )}
                     <div className="absolute right-3 top-3 text-gray-400">
@@ -159,7 +160,6 @@ export default function CraxinnoLogin() {
                     </div>
                   </div>
                 </div>
-
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Password
@@ -173,7 +173,6 @@ export default function CraxinnoLogin() {
                       disabled={loading}
                       required
                     />
-
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
@@ -184,12 +183,11 @@ export default function CraxinnoLogin() {
                     </button>
                     {errors.password && (
                       <p className="text-sm text-red-600 mt-1">
-                        {errors.password.message}
+                        {errors.password && typeof errors.password.message === "string" && errors.password.message}
                       </p>
                     )}
                   </div>
                 </div>
-
                 {!isSignup && (
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center">
@@ -216,7 +214,6 @@ export default function CraxinnoLogin() {
                     </a>
                   </div>
                 )}
-
                 <button
                   type="submit"
                   disabled={loading}
@@ -232,9 +229,7 @@ export default function CraxinnoLogin() {
                 </button>
               </form>
             </div>
-
             <div className="text-center text-gray-500 text-sm">Or</div>
-
             <button
               type="button"
               disabled={loading}
@@ -260,7 +255,6 @@ export default function CraxinnoLogin() {
               </svg>
               <span>Login with Google</span>
             </button>
-
             <div className="text-center text-sm text-gray-600 mt-6">
               {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
               <button

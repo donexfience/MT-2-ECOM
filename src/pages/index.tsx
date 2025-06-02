@@ -2,7 +2,6 @@ import React, { useMemo, useState } from "react";
 import {
   Heart,
   ShoppingCart,
-  User,
   Award,
   Shield,
   Truck,
@@ -13,16 +12,23 @@ import {
 import { useCategories } from "@/hooks/product/useCategories";
 import { useProducts } from "@/hooks/product/useProducts";
 import { useRouter } from "next/navigation";
-import Header from "@/components/Header";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { clearAuthCookies } from "@/lib/cookie";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import Image from "next/image";
+import { IProduct } from "@/types/IOrder";
+
+export interface getAllProductParams {
+  category: string | undefined;
+  search: string | undefined;
+  page: string;
+  limit: string;
+}
 
 export default function FurnitureLandingPage() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm] = useState("");
   const [showLoginAlert, setShowLoginAlert] = useState(false);
 
   const {
@@ -32,7 +38,7 @@ export default function FurnitureLandingPage() {
   } = useCategories();
   const displayCategories = apiCategories ? [...apiCategories] : ["All"];
 
-  const productParams = useMemo(
+  const productParams: getAllProductParams = useMemo(
     () => ({
       category: selectedCategory === "All" ? undefined : selectedCategory,
       search: searchTerm || undefined,
@@ -42,12 +48,13 @@ export default function FurnitureLandingPage() {
     [selectedCategory, searchTerm]
   );
   const { products, loading, error } = useProducts(productParams);
+  const arrayProduct = [products];
 
-  const formatCurrency = (amount: any) => {
+  const formatCurrency = (amount: number) => {
     return `Rp ${amount.toLocaleString("id-ID")}`;
   };
 
-  const handleProductClick = (productId: any) => {
+  const handleProductClick = (productId: string) => {
     if (!user) {
       setShowLoginAlert(true);
     } else {
@@ -123,10 +130,12 @@ export default function FurnitureLandingPage() {
           <ShoppingCart className="w-6 h-6 text-gray-600 cursor-pointer" />
           {user ? (
             <div className="flex items-center space-x-2">
-              <img
-                src="https://via.placeholder.com/32"
+              <Image
+                src="/images/profile.png"
                 alt="User"
                 className="w-8 h-8 rounded-full"
+                width={50}
+                height={50}
               />
               <LogOut
                 onClick={() => {
@@ -167,7 +176,13 @@ export default function FurnitureLandingPage() {
           <div className="flex-1 relative">
             <div className="relative">
               <div className="w-full h-96 bg-gray-200 rounded-lg flex items-center justify-center">
-                <img src="sofa.webp" alt="Sofa" />
+                <Image
+                  width={850}
+                  height={380}
+                  className=""
+                  src="/sofa.webp"
+                  alt="Sofa"
+                />
               </div>
               <div className="absolute bottom-4 right-4 bg-white p-4 rounded-lg shadow-lg">
                 <div className="flex items-center space-x-3">
@@ -278,7 +293,7 @@ export default function FurnitureLandingPage() {
                 </p>
               </div>
             </div>
-          ) : products.length === 0 ? (
+          ) : arrayProduct.length === 0 ? (
             <div className="text-center py-20">
               <div className="bg-gray-50 border border-gray-200 rounded-2xl p-12 max-w-md mx-auto">
                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -306,87 +321,91 @@ export default function FurnitureLandingPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {products.map((product: any) => (
-                <div
-                  key={product.id}
-                  onClick={() => handleProductClick(product.id)}
-                  className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden border border-gray-100 hover:border-orange-200 transform hover:-translate-y-2"
-                >
-                  <div className="relative overflow-hidden rounded-t-3xl">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-72 object-cover group-hover:scale-110 transition-transform duration-700"
-                    />
+              {products &&
+                Array.isArray(products) &&
+                products.map((product: IProduct) => (
+                  <div
+                    key={product.id}
+                    onClick={() => handleProductClick(product.id)}
+                    className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden border border-gray-100 hover:border-orange-200 transform hover:-translate-y-2"
+                  >
+                    <div className="relative overflow-hidden rounded-t-3xl">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
+                      <Image
+                        src={product.images[0]}
+                        alt={product.name}
+                        className="w-full h-72 object-cover group-hover:scale-110 transition-transform duration-700"
+                        width={180}
+                        height={10}
+                      />
 
-                    <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-20">
-                      <div className="w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:scale-110 transition-all duration-200">
-                        <Heart className="w-5 h-5 text-gray-600 hover:text-red-500 transition-colors" />
+                      <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-20">
+                        <div className="w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:scale-110 transition-all duration-200">
+                          <Heart className="w-5 h-5 text-gray-600 hover:text-red-500 transition-colors" />
+                        </div>
+                      </div>
+
+                      <div className="absolute top-6 left-6 z-20">
+                        <span className="bg-gradient-to-r from-orange-400 to-orange-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg backdrop-blur-sm">
+                          {product.category}
+                        </span>
+                      </div>
+
+                      <div className="absolute inset-0 bg-black bg-opacity-60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-30">
+                        <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                          <button className="bg-white text-gray-900 px-8 py-3 rounded-full font-semibold shadow-xl hover:bg-gray-100 transition-colors">
+                            Quick View
+                          </button>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="absolute top-6 left-6 z-20">
-                      <span className="bg-gradient-to-r from-orange-400 to-orange-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg backdrop-blur-sm">
-                        {product.category}
-                      </span>
-                    </div>
+                    <div className="p-8">
+                      <h3 className="font-bold text-xl text-gray-900 mb-3 group-hover:text-orange-500 transition-colors duration-300 leading-tight">
+                        {product.name}
+                      </h3>
+                      <p
+                        className="text-gray-600 text-sm mb-6 leading-relaxed overflow-hidden"
+                        style={{
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                        }}
+                      >
+                        {product.description}
+                      </p>
 
-                    <div className="absolute inset-0 bg-black bg-opacity-60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-30">
-                      <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                        <button className="bg-white text-gray-900 px-8 py-3 rounded-full font-semibold shadow-xl hover:bg-gray-100 transition-colors">
-                          Quick View
+                      <div className="flex items-center space-x-3 mb-6">
+                        <div className="flex items-center space-x-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-5 h-5 transition-colors duration-200 ${
+                                i < Math.floor(product.rating)
+                                  ? "text-yellow-400 fill-current"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-gray-500 text-sm font-medium">
+                          ({product.reviewCount})
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
+                            {formatCurrency(product.basePrice)}
+                          </span>
+                        </div>
+                        <button className="bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white px-6 py-3 rounded-full font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                          View Details
                         </button>
                       </div>
                     </div>
                   </div>
-
-                  <div className="p-8">
-                    <h3 className="font-bold text-xl text-gray-900 mb-3 group-hover:text-orange-500 transition-colors duration-300 leading-tight">
-                      {product.name}
-                    </h3>
-                    <p
-                      className="text-gray-600 text-sm mb-6 leading-relaxed overflow-hidden"
-                      style={{
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                      }}
-                    >
-                      {product.description}
-                    </p>
-
-                    <div className="flex items-center space-x-3 mb-6">
-                      <div className="flex items-center space-x-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-5 h-5 transition-colors duration-200 ${
-                              i < Math.floor(product.rating)
-                                ? "text-yellow-400 fill-current"
-                                : "text-gray-300"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-gray-500 text-sm font-medium">
-                        ({product.reviewCount})
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
-                          {formatCurrency(product.basePrice)}
-                        </span>
-                      </div>
-                      <button className="bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white px-6 py-3 rounded-full font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
-                        View Details
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                ))}
             </div>
           )}
 

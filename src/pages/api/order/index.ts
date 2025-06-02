@@ -9,6 +9,7 @@ import {
   createSuccessEmailTemplate,
   sendEmail,
 } from "@/service/mailservice/mailService";
+import { IProduct } from "@/types/IOrder";
 
 export default async function handler(
   req: NextApiRequest,
@@ -35,10 +36,10 @@ export default async function handler(
     const newAddress = new Address(address);
     await newAddress.save();
 
-    const productIds = products.map((p: any) => p.id);
+    const productIds = products.map((p: IProduct) => p.id);
     const productDocs = await Product.find({ _id: { $in: productIds } });
 
-    const orderProducts = products.map((p: any) => {
+    const orderProducts = products.map((p:IProduct) => {
       const productDoc = productDocs.find((pd) => pd._id.toString() === p.id);
       if (!productDoc) throw new Error(`Product ${p.id} not found`);
 
@@ -55,7 +56,7 @@ export default async function handler(
     });
 
     let total_amount = orderProducts.reduce(
-      (sum: number, p: any) => sum + p.price * p.quantity,
+      (sum: number, p: IProduct) => sum + p.price * p.quantity,
       0
     );
 
@@ -78,8 +79,6 @@ export default async function handler(
     if (isNaN(total_amount) || total_amount <= 0) {
       throw new Error("Invalid total amount calculated");
     }
-    let emailSent = false;
-    let emailError = null;
     const newOrder = new Order({
       userId,
       customer_name,
@@ -115,7 +114,7 @@ export default async function handler(
           newPayment.transaction_status = "failed";
           await newOrder.save();
           await newPayment.save();
-          const failureEmailResult = await sendEmail(
+          await sendEmail(
             customer_email,
             "Order Processing Failed - Insufficient Stock",
             createFailureEmailTemplate(
@@ -124,34 +123,23 @@ export default async function handler(
               "Insufficient stock for one or more products"
             )
           );
-
-          if (!failureEmailResult.success) {
-            emailError = failureEmailResult.error;
-          } else {
-            emailSent = true;
-          }
+          console.log(newOrder, "newORder", orderProducts, "type chekcing ");
           throw new Error(`Insufficient stock for product ${p.product_id}`);
         }
+        console.log(newOrder, orderProducts, "type chekcing ");
+
         product.stockQuantity -= p.quantity;
         await product.save();
-        const successEmailResult = await sendEmail(
+         await sendEmail(
           customer_email,
           `Order Confirmation - Order #${newOrder._id}`,
           createSuccessEmailTemplate(newOrder, customer_name, orderProducts)
         );
-        console.log(successEmailResult, "success email result");
-
-        if (!successEmailResult.success) {
-          emailError = successEmailResult.error;
-        } else {
-          emailSent = true;
-        }
       }
     } else if (outcome > 0.7 && outcome < 0.9) {
-      console.log("outcome 2");
       newPayment.transaction_status = "declined";
       newOrder.order_status = "payment_declined";
-      const failureEmailResult = await sendEmail(
+   await sendEmail(
         customer_email,
         "Payment Declined - Order Processing Failed",
         createFailureEmailTemplate(
@@ -160,17 +148,10 @@ export default async function handler(
           "Payment was declined by your bank or card issuer"
         )
       );
-
-      if (!failureEmailResult.success) {
-        emailError = failureEmailResult.error;
-      } else {
-        emailSent = true;
-      }
     } else {
-      console.log("outcome2");
       newPayment.transaction_status = "failed";
       newOrder.order_status = "payment_failed";
-      const failureEmailResult = await sendEmail(
+       await sendEmail(
         customer_email,
         "Payment Declined - Order Processing Failed",
         createFailureEmailTemplate(
@@ -179,12 +160,6 @@ export default async function handler(
           "Payment was declined by your bank or card issuer"
         )
       );
-
-      if (!failureEmailResult.success) {
-        emailError = failureEmailResult.error;
-      } else {
-        emailSent = true;
-      }
     }
 
     await newPayment.save();
@@ -194,10 +169,10 @@ export default async function handler(
       order: newOrder,
       status: newOrder.order_status,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error creating order:", error);
     res
       .status(500)
-      .json({ message: "Internal server error", error: error.message });
+      .json({ message: "Internal server error" });
   }
 }

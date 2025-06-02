@@ -1,28 +1,25 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useOrderDetails } from "@/hooks/order/useOrderDetails";
-import { useAuth } from "@/hooks/auth/useAuth";
 import {
   CheckCircle,
-  XCircle,
   Package,
   User,
   Mail,
   MapPin,
-  Calendar,
   CreditCard,
   Home,
-  RefreshCw,
   ArrowRight,
 } from "lucide-react";
 import { LoadingScreen } from "@/components/Loadingscreen";
 import { OrderFailedPage } from "@/components/OrderFailPage";
+import { IProduct } from "@/types/IOrder";
 
 const ThankYouPage = () => {
-  const user = useAuth();
+  // const user = useAuth();
   const router = useRouter();
   const { orderId } = router.query;
-  const { order, loading, error } = useOrderDetails(orderId);
+  const { order, loading, error } = useOrderDetails(orderId as string);
 
   const [showContent, setShowContent] = useState(false);
 
@@ -110,9 +107,9 @@ const ThankYouPage = () => {
                 Order Items
               </h3>
               <div className="space-y-3">
-                {order.products?.map((product: any, index: any) => (
+                {order.products?.map((product: IProduct, index: number) => (
                   <div
-                    key={product._id || index}
+                    key={product.id || index}
                     className={`flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-200 transition-all duration-500 delay-${
                       index * 100
                     } transform ${

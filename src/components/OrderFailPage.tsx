@@ -2,7 +2,13 @@ import { ArrowRight, Home, RefreshCw, XCircle } from "lucide-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
-export const OrderFailedPage = ({ error, onRetry }: { error: any; onRetry: any }) => {
+export const OrderFailedPage = ({
+  error,
+  onRetry,
+}: {
+  error: string;
+  onRetry: () => void;
+}) => {
   const router = useRouter();
   const [showContent, setShowContent] = useState(false);
 

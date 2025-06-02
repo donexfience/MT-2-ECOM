@@ -38,7 +38,7 @@ export const validateCVV = (cvv: string) => {
   return cvv.length === 3 && /^\d+$/.test(cvv);
 };
 
-export const formatCardNumber = (value: any) => {
+export const formatCardNumber = (value: string) => {
   const cleanValue = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
   const matches = cleanValue.match(/\d{4,16}/g);
   const match = (matches && matches[0]) || "";
@@ -53,7 +53,7 @@ export const formatCardNumber = (value: any) => {
   }
 };
 
-export const formatExpiryDate = (value: any) => {
+export const formatExpiryDate = (value: string) => {
   const cleanValue = value.replace(/\D+/g, "");
   if (cleanValue.length >= 2) {
     return cleanValue.substring(0, 2) + "/" + cleanValue.substring(2, 4);

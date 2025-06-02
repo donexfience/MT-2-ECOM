@@ -1,10 +1,15 @@
 import { productService } from "@/service/ProductService";
+import { IProduct } from "@/types/IOrder";
 import { useState, useEffect } from "react";
 
-export const useProductById = (id: any) => {
-  const [product, setProduct] = useState<any>(null);
+export interface productByIdRes {
+  product: IProduct;
+}
+
+export const useProductById = (id: string) => {
+  const [product, setProduct] = useState<IProduct | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -13,10 +18,13 @@ export const useProductById = (id: any) => {
       try {
         setLoading(true);
         setError(null);
-        const data: any = await productService.getProductById(id);
+        const data = (await productService.getProductById(
+          id
+        )) as productByIdRes;
         setProduct(data.product);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        console.log(err);
+        setError("failed to fetch product");
         setProduct(null);
       } finally {
         setLoading(false);

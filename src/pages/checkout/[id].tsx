@@ -10,6 +10,7 @@ import {
   User,
   Mail,
   Phone,
+  AlertCircle,
 } from "lucide-react";
 import {
   formatCardNumber,
@@ -22,20 +23,55 @@ import {
 } from "@/lib/validations/validation";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { orderService } from "@/service/OrderService";
+import { CreateOrderPayload, createOrderResponse } from "@/types/IOrder";
+import Image from "next/image";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+interface FormData {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  cardNumber: string;
+  expiryDate: string;
+  cvv: string;
+  country: string;
+}
+
+interface FormErrors {
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  cardNumber?: string;
+  expiryDate?: string;
+  cvv?: string;
+  country?: string;
+  terms?: string;
+}
+
+type DeliveryMethod = "normal" | "express" | "fast";
 
 const CheckoutPage = () => {
   const router = useRouter();
   const { id, quantity: urlQuantity } = router.query;
-  const { product, loading, error } = useProductById(id);
+  const { product, loading, error } = useProductById(id as string);
   const { user } = useAuth();
 
   const [quantity, setQuantity] = useState(1);
   const [discountCode, setDiscountCode] = useState("");
   const [discountApplied, setDiscountApplied] = useState(false);
   const [discountAmount, setDiscountAmount] = useState(0);
-  const [deliveryMethod, setDeliveryMethod] = useState("normal");
+  const [deliveryMethod, setDeliveryMethod] =
+    useState<DeliveryMethod>("normal");
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     fullName: "",
     email: "",
     phoneNumber: "",
@@ -49,7 +85,7 @@ const CheckoutPage = () => {
     country: "",
   });
 
-  const [formErrors, setFormErrors] = useState<any>({});
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   useEffect(() => {
@@ -88,10 +124,10 @@ const CheckoutPage = () => {
   const discount = discountApplied ? discountAmount : 0;
   const total = basePrice + shipping - discount;
 
-  const handleInputChange = (field: any, value: any) => {
+  const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (formErrors[field]) {
-      setFormErrors((prev: any) => ({ ...prev, [field]: "" }));
+      setFormErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
@@ -105,8 +141,8 @@ const CheckoutPage = () => {
     }
   };
 
-  const validateForm = () => {
-    const errors: any = {};
+  const validateForm = (): boolean => {
+    const errors: FormErrors = {};
     if (!formData.fullName.trim()) errors.fullName = "Full name is required";
     if (!formData.email.trim()) errors.email = "Email is required";
     else if (!validateEmail(formData.email))
@@ -135,11 +171,11 @@ const CheckoutPage = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const handlePayNow = async (e: any) => {
+  const handlePayNow = async (e: React.FormEvent<HTMLButtonElement>) => {
     e.preventDefault();
     if (validateForm()) {
       try {
-        const TransformedForBackend = {
+        const TransformedForBackend: CreateOrderPayload = {
           userId: user?._id,
           payment_method: "card",
           customer_name: user?.username || formData.fullName,
@@ -155,21 +191,29 @@ const CheckoutPage = () => {
           deliveryMethod,
           discount: discountApplied ? discountAmount : 0,
         };
-        const response: any = await orderService.createOrder(
+        const response = (await orderService.createOrder(
           TransformedForBackend
-        );
+        )) as createOrderResponse;
         console.log(response, "response");
-        if (response && response.order._id) {
+        if (response.order._id && response.order.order_status == "processing") {
           router.push(`/thank-you?orderId=${response.order._id}`);
         } else {
-          alert("Transaction failed. Please try again.");
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>transactoin failed"</AlertDescription>
+          </Alert>;
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(error);
-        alert(
-          error.response?.data?.message ||
-            "Transaction declined. Please try again or contact support."
-        );
+        const errorMessage =
+          error instanceof Error &&
+          "response" in error &&
+          typeof (error as { response?: { data?: { message?: string } } })
+            .response?.data?.message === "string"
+            ? (error as { response: { data: { message: string } } }).response
+                .data.message
+            : "Transaction declined. Please try again or contact support.";
+        alert(errorMessage);
       }
     }
   };
@@ -604,10 +648,12 @@ const CheckoutPage = () => {
               </div>
               <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl mb-6">
                 <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
-                  <img
+                  <Image
                     src={product.images?.[0] || "/api/placeholder/64/64"}
                     alt={product.name}
                     className="w-full h-full object-cover"
+                    width={50}
+                    height={50}
                   />
                 </div>
                 <div className="flex-1 min-w-0">

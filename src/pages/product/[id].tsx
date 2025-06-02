@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
+import Image from "next/image";
 import { useProductById } from "@/hooks/product/useProductById";
 import { Star, Heart, Shield, Truck, RotateCcw, Award } from "lucide-react";
+
 
 const ProductDetailsPage = () => {
   const router = useRouter();
   const { id } = router.query;
-  const { product, loading, error } = useProductById(id);
+  const { product, loading, error } = useProductById(id as string); 
 
   const [selectedVariant, setSelectedVariant] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -28,14 +30,14 @@ const ProductDetailsPage = () => {
             Product Not Found
           </h2>
           <p className="text-gray-600">
-            The product you're looking for doesn't exist.
+            The product you&apos;re looking for doesn&apos;t exist.
           </p>
         </div>
       </div>
     );
   }
 
-  const handleQuantityChange = (increment: any) => {
+  const handleQuantityChange = (increment: number) => {
     setQuantity((prev) => Math.max(1, prev + increment));
   };
 
@@ -63,9 +65,9 @@ const ProductDetailsPage = () => {
             <button className="text-gray-700 hover:text-gray-900">About</button>
             <button className="text-gray-700 hover:text-gray-900">Shop</button>
             <button className="text-gray-700 hover:text-gray-900">
-              contact
+              Contact
             </button>
-            <button className="text-gray-700 hover:text-gray-900">ABOUT</button>
+            <button className="text-gray-700 hover:text-gray-900">About</button>
           </div>
           <div className="flex items-center space-x-4">
             <button className="text-gray-700 hover:text-gray-900">🔍</button>
@@ -80,7 +82,7 @@ const ProductDetailsPage = () => {
           <div className="flex gap-4">
             <div className="flex flex-col space-y-4">
               {product.images &&
-                product.images.slice(0, 5).map((image: any, index: any) => (
+                product.images.slice(0, 5).map((image, index) => (
                   <button
                     key={index}
                     className={`w-20 h-20 border-2 rounded-lg overflow-hidden ${
@@ -90,9 +92,11 @@ const ProductDetailsPage = () => {
                     }`}
                     onClick={() => setSelectedVariant(index)}
                   >
-                    <img
+                    <Image
                       src={image || "/api/placeholder/80/80"}
                       alt={`${product.name} view ${index + 1}`}
+                      width={80}
+                      height={80}
                       className="w-full h-full object-cover"
                     />
                   </button>
@@ -101,12 +105,14 @@ const ProductDetailsPage = () => {
 
             <div className="flex-1">
               <div className="relative aspect-square bg-gradient-to-br from-pink-100 to-purple-100 rounded-lg overflow-hidden">
-                <img
+                <Image
                   src={
                     product.images?.[selectedVariant] ||
                     "/api/placeholder/500/500"
                   }
                   alt={product.name}
+                  width={500}
+                  height={500}
                   className="w-full h-full object-cover"
                 />
                 {discount > 0 && (
@@ -173,7 +179,7 @@ const ProductDetailsPage = () => {
                   Size:
                 </h3>
                 <div className="flex space-x-3">
-                  {product.variants.map((variant: any, index: any) => (
+                  {product.variants.map((variant, index) => (
                     <button
                       key={index}
                       onClick={() => setSelectedVariant(index)}
@@ -183,7 +189,7 @@ const ProductDetailsPage = () => {
                           : "border-gray-300 text-gray-700 hover:border-gray-400"
                       }`}
                     >
-                      {variant.size || `Option ${index + 1}`}
+                      { `Option ${index + 1}`}
                     </button>
                   ))}
                 </div>
