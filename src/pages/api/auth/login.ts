@@ -49,16 +49,18 @@ export default async function handler(
       expiresIn: "7d",
     });
 
-    await User.findByIdAndUpdate(user._id, { refreshToken });
-
-    // Set access token as httpOnly cookie
+    // Set access refresh  tokens as httpOnly cookie
     res.setHeader("Set-Cookie", [
       `accessToken=${accessToken}; HttpOnly; Path=/; Max-Age=${
         2 * 60
       }; SameSite=Strict${
         process.env.NODE_ENV === "production" ? "; Secure" : ""
       }`,
+      `refreshToken=${refreshToken}; HttpOnly; Path=/; Max-Age=${
+        7 * 24 * 60 * 60
+      }`,
     ]);
+
     res.status(200).json({
       message: "Login successful",
       user: {

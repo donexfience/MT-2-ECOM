@@ -4,8 +4,8 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Loginschema } from "../../../utils/LoginSchema";
 import { useRouter } from "next/router";
-import toast from "react-hot-toast";
 import axiosInstance from "@/lib/axios";
+import { toast } from "react-fox-toast";
 
 export default function CraxinnoLogin() {
   const [showPassword, setShowPassword] = useState(false);
@@ -54,7 +54,8 @@ export default function CraxinnoLogin() {
         }, 1000);
       }
     } catch (err: any) {
-      console.error("Authentication error:", err);
+      console.log(err, "error of login");
+      toast.error(err.response.data.message);
 
       if (err.response?.data?.message) {
         toast.error(err.response.data.message);
