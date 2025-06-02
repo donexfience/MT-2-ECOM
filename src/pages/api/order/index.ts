@@ -4,6 +4,11 @@ import Order from "@/models/order";
 import Product from "@/models/product";
 import Payment from "@/models/payment";
 import { NextApiRequest, NextApiResponse } from "next";
+import {
+  createFailureEmailTemplate,
+  createSuccessEmailTemplate,
+  sendEmail,
+} from "@/service/mailservice/mailService";
 
 export default async function handler(
   req: NextApiRequest,
@@ -73,7 +78,8 @@ export default async function handler(
     if (isNaN(total_amount) || total_amount <= 0) {
       throw new Error("Invalid total amount calculated");
     }
-
+    let emailSent = false;
+    let emailError = null;
     const newOrder = new Order({
       userId,
       customer_name,
@@ -109,19 +115,75 @@ export default async function handler(
           newPayment.transaction_status = "failed";
           await newOrder.save();
           await newPayment.save();
+          const failureEmailResult = await sendEmail(
+            customer_email,
+            "Order Processing Failed - Insufficient Stock",
+            createFailureEmailTemplate(
+              newOrder,
+              customer_name,
+              "Insufficient stock for one or more products"
+            )
+          );
+
+          if (!failureEmailResult.success) {
+            emailError = failureEmailResult.error;
+          } else {
+            emailSent = true;
+          }
           throw new Error(`Insufficient stock for product ${p.product_id}`);
         }
         product.stockQuantity -= p.quantity;
         await product.save();
+        const successEmailResult = await sendEmail(
+          customer_email,
+          `Order Confirmation - Order #${newOrder._id}`,
+          createSuccessEmailTemplate(newOrder, customer_name, orderProducts)
+        );
+
+        if (!successEmailResult.success) {
+          emailError = successEmailResult.error;
+        } else {
+          emailSent = true;
+        }
       }
     } else if (outcome > 0.7 && outcome < 0.9) {
       console.log("outcome 2");
       newPayment.transaction_status = "declined";
       newOrder.order_status = "payment_declined";
+      const failureEmailResult = await sendEmail(
+        customer_email,
+        "Payment Declined - Order Processing Failed",
+        createFailureEmailTemplate(
+          newOrder,
+          customer_name,
+          "Payment was declined by your bank or card issuer"
+        )
+      );
+
+      if (!failureEmailResult.success) {
+        emailError = failureEmailResult.error;
+      } else {
+        emailSent = true;
+      }
     } else {
       console.log("outcome2");
       newPayment.transaction_status = "failed";
       newOrder.order_status = "payment_failed";
+      const failureEmailResult = await sendEmail(
+        customer_email,
+        "Payment Declined - Order Processing Failed",
+        createFailureEmailTemplate(
+          newOrder,
+          customer_name,
+          "Payment was declined by your bank or card issuer"
+        )
+      );
+
+      if (!failureEmailResult.success) {
+        emailError = failureEmailResult.error;
+      } else {
+        emailSent = true;
+      }
     }
 
     await newPayment.save();
