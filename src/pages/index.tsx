@@ -8,16 +8,22 @@ import {
   Truck,
   Headphones,
   Star,
+  LogOut,
 } from "lucide-react";
 import { useCategories } from "@/hooks/product/useCategories";
 import { useProducts } from "@/hooks/product/useProducts";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { clearAuthCookies } from "@/lib/cookie";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function FurnitureLandingPage() {
+  const { user, logout } = useAuth();
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showLoginAlert, setShowLoginAlert] = useState(false);
 
   const {
     categories: apiCategories,
@@ -42,7 +48,11 @@ export default function FurnitureLandingPage() {
   };
 
   const handleProductClick = (productId: any) => {
-    router.push(`/product/${productId}`);
+    if (!user) {
+      setShowLoginAlert(true);
+    } else {
+      router.push(`/product/${productId}`);
+    }
   };
 
   const features = [
@@ -70,6 +80,26 @@ export default function FurnitureLandingPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      {showLoginAlert && (
+        <Alert className="fixed top-20 right-20 z-50 bg-white shadow-lg rounded-lg p-4">
+          <AlertTitle className="font-bold text-lg">Please Login</AlertTitle>
+          <AlertDescription className="text-gray-600">
+            You need to login to view product details.{" "}
+            <button
+              onClick={() => router.push("/sign-in")}
+              className="text-blue-500 underline"
+            >
+              Sign In
+            </button>
+          </AlertDescription>
+          <button
+            onClick={() => setShowLoginAlert(false)}
+            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+          >
+            Close
+          </button>
+        </Alert>
+      )}
       <header className="flex items-center justify-between px-6 py-4 bg-white shadow-sm">
         <div className="flex items-center space-x-8">
           <h1 className="text-2xl font-bold text-gray-900">SalesGood</h1>
@@ -91,9 +121,31 @@ export default function FurnitureLandingPage() {
         <div className="flex items-center space-x-4">
           <Heart className="w-6 h-6 text-gray-600 cursor-pointer" />
           <ShoppingCart className="w-6 h-6 text-gray-600 cursor-pointer" />
-          <User className="w-6 h-6 text-gray-600 cursor-pointer" />
+          {user ? (
+            <div className="flex items-center space-x-2">
+              <img
+                src="https://via.placeholder.com/32"
+                alt="User"
+                className="w-8 h-8 rounded-full"
+              />
+              <LogOut
+                onClick={() => {
+                  logout();
+                  router.push("/sign-in");
+                }}
+                className="w-6 h-6 text-gray-600 cursor-pointer"
+              />
+            </div>
+          ) : (
+            <button
+              onClick={() => router.push("/sign-in")}
+              className="bg-orange-400 hover:bg-orange-500 text-white px-4 py-2 rounded-lg"
+            >
+              Sign In
+            </button>
+          )}
         </div>
-      </header>{" "}
+      </header>
       <section className="relative bg-gradient-to-r from-orange-50 to-orange-100 min-h-[600px] flex items-center">
         <div className="container mx-auto px-6 flex items-center">
           <div className="flex-1 max-w-lg">

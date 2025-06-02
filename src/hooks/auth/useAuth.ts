@@ -4,15 +4,15 @@ import { useState, useEffect } from "react";
 interface User {
   userId: string;
   email: string;
-  username:string
-  _id:string
+  username: string;
+  _id: string;
 }
 
 interface UseAuthReturn {
   user: User | null;
-
   loading: boolean;
   error: string | null;
+  logout: () => Promise<void>;
 }
 
 export function useAuth(): UseAuthReturn {
@@ -24,8 +24,7 @@ export function useAuth(): UseAuthReturn {
     async function fetchUser() {
       try {
         const response: any = await axiosInstance.get("/api/auth/me");
-
-        if (response) {
+        if (response && response.data && response.data.user) {
           setUser(response.data.user);
         } else {
           setUser(null);
@@ -41,5 +40,14 @@ export function useAuth(): UseAuthReturn {
     fetchUser();
   }, []);
 
-  return { user, loading, error };
+  const logout = async () => {
+    try {
+      await axiosInstance.post("/api/auth/logout");
+      setUser(null);
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
+  };
+
+  return { user, loading, error, logout };
 }

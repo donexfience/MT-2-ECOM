@@ -139,6 +139,7 @@ export default async function handler(
           `Order Confirmation - Order #${newOrder._id}`,
           createSuccessEmailTemplate(newOrder, customer_name, orderProducts)
         );
+        console.log(successEmailResult, "success email result");
 
         if (!successEmailResult.success) {
           emailError = successEmailResult.error;

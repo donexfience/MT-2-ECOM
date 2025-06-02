@@ -5,7 +5,7 @@ const transporter = nodemailer.createTransport({
   port: 2525,
   auth: {
     user: "eda6e6a683da9d",
-    pass: process.env.nodemailer_password,
+    pass: process.env.nodemailer_password || "08e5260504155a",
   },
 });
 
@@ -92,7 +92,7 @@ export const createFailureEmailTemplate = (
 export const sendEmail = async (to: any, subject: any, htmlContent: any) => {
   try {
     const mailOptions = {
-      from: '"Your Store" <noreply@yourstore.com>',
+      from: 'streamrxyt@gmail.com',
       to: to,
       subject: subject,
       html: htmlContent,

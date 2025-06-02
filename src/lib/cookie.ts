@@ -37,6 +37,7 @@ export function clearAuthCookies(res: NextApiResponse) {
 
   const expiredAccessToken = `${ACCESS_TOKEN_NAME}=${cookieOptions}`;
   const expiredRefreshToken = `${REFRESH_TOKEN_NAME}=${cookieOptions}`;
+  console.log("calling clear cookie");
 
   res.setHeader("Set-Cookie", [expiredAccessToken, expiredRefreshToken]);
 }
