@@ -39,7 +39,9 @@ const ProductDetailsPage = () => {
     setQuantity((prev) => Math.max(1, prev + increment));
   };
 
-  const handleBuyNow = () => {};
+  const handleBuyNow = () => {
+    router.push(`/checkout/${id}?quantity=${quantity}`);
+  };
 
   const currentPrice = product.basePrice;
   const originalPrice = currentPrice + currentPrice * 0.2;
