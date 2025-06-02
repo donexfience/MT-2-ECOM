@@ -32,7 +32,7 @@ export function useAuth(): UseAuthReturn {
   useEffect(() => {
     async function fetchUser() {
       try {
-        const response: Response = await axiosInstance.get("/api/auth/me");
+        const response: Response = await axiosInstance.get("/auth/me");
         if (response && response.data && response.data.user) {
           setUser(response.data.user);
         } else {
