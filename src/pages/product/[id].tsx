@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
-import { useProductById } from "@/hooks/useProductById";
+import { useProductById } from "@/hooks/product/useProductById";
 import { Star, Heart, Shield, Truck, RotateCcw, Award } from "lucide-react";
 
 const ProductDetailsPage = () => {

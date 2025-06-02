@@ -9,8 +9,8 @@ import {
   Headphones,
   Star,
 } from "lucide-react";
-import { useCategories } from "@/hooks/useCategories";
-import { useProducts } from "@/hooks/useProducts";
+import { useCategories } from "@/hooks/product/useCategories";
+import { useProducts } from "@/hooks/product/useProducts";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 

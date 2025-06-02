@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { useProductById } from "@/hooks/useProductById";
+import { useProductById } from "@/hooks/product/useProductById";
 import {
   Truck,
   Lock,
@@ -20,11 +20,14 @@ import {
   validateExpiryDate,
   validatePhone,
 } from "@/lib/validations/validation";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { orderService } from "@/service/OrderService";
 
 const CheckoutPage = () => {
   const router = useRouter();
   const { id, quantity: urlQuantity } = router.query;
   const { product, loading, error } = useProductById(id);
+  const { user } = useAuth();
 
   const [quantity, setQuantity] = useState(1);
   const [discountCode, setDiscountCode] = useState("");
@@ -32,7 +35,6 @@ const CheckoutPage = () => {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [deliveryMethod, setDeliveryMethod] = useState("normal");
 
-  // Form state
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -44,6 +46,7 @@ const CheckoutPage = () => {
     cardNumber: "",
     expiryDate: "",
     cvv: "",
+    country: "",
   });
 
   const [formErrors, setFormErrors] = useState<any>({});
@@ -87,7 +90,6 @@ const CheckoutPage = () => {
 
   const handleInputChange = (field: any, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-
     if (formErrors[field]) {
       setFormErrors((prev: any) => ({ ...prev, [field]: "" }));
     }
@@ -105,58 +107,76 @@ const CheckoutPage = () => {
 
   const validateForm = () => {
     const errors: any = {};
-
     if (!formData.fullName.trim()) errors.fullName = "Full name is required";
     if (!formData.email.trim()) errors.email = "Email is required";
     else if (!validateEmail(formData.email))
       errors.email = "Invalid email format";
-
     if (!formData.phoneNumber.trim())
       errors.phoneNumber = "Phone number is required";
     else if (!validatePhone(formData.phoneNumber))
       errors.phoneNumber = "Invalid phone number format";
-
     if (!formData.address.trim()) errors.address = "Address is required";
     if (!formData.city.trim()) errors.city = "City is required";
     if (!formData.state.trim()) errors.state = "State is required";
     if (!formData.zipCode.trim()) errors.zipCode = "ZIP code is required";
-
     if (!formData.cardNumber.trim())
       errors.cardNumber = "Card number is required";
     else if (!validateCardNumber(formData.cardNumber))
       errors.cardNumber = "Invalid card number (16 digits required)";
-
     if (!formData.expiryDate.trim())
       errors.expiryDate = "Expiry date is required";
     else if (!validateExpiryDate(formData.expiryDate))
       errors.expiryDate = "Invalid or past expiry date";
-
     if (!formData.cvv.trim()) errors.cvv = "CVV is required";
     else if (!validateCVV(formData.cvv))
       errors.cvv = "Invalid CVV (3 digits required)";
-
     if (!agreedToTerms) errors.terms = "Please agree to terms and conditions";
-
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  const handlePayNow = () => {
+  const handlePayNow = async (e: any) => {
+    e.preventDefault();
     if (validateForm()) {
-      console.log("Processing payment...", {
-        formData,
-        product,
-        quantity,
-        total,
-      });
-      alert("Order placed successfully!");
+      try {
+        const TransformedForBackend = {
+          userId: user?._id,
+          payment_method: "card",
+          customer_name: user?.username || formData.fullName,
+          customer_email: user?.email || formData.email,
+          address: {
+            street: formData.address,
+            city: formData.city,
+            state: formData.state,
+            zip: formData.zipCode,
+            country: formData.country,
+          },
+          products: [{ ...product, quantity }],
+          deliveryMethod,
+          discount: discountApplied ? discountAmount : 0,
+        };
+        const response: any = await orderService.createOrder(
+          TransformedForBackend
+        );
+        console.log(response, "response");
+        if (response && response.order._id) {
+          router.push(`/thank-you?orderId=${response.order._id}`);
+        } else {
+          alert("Transaction failed. Please try again.");
+        }
+      } catch (error: any) {
+        console.error(error);
+        alert(
+          error.response?.data?.message ||
+            "Transaction declined. Please try again or contact support."
+        );
+      }
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <button
             onClick={() => router.back()}
@@ -183,7 +203,6 @@ const CheckoutPage = () => {
                   Contact Information
                 </h2>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="relative">
                   <User className="absolute left-3 top-6 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -206,7 +225,6 @@ const CheckoutPage = () => {
                     </p>
                   )}
                 </div>
-
                 <div className="relative">
                   <Mail className="absolute left-3 top-6 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
@@ -226,7 +244,6 @@ const CheckoutPage = () => {
                     </p>
                   )}
                 </div>
-
                 <div className="md:col-span-2">
                   <div className="flex">
                     <select className="px-4 py-3 border border-r-0 border-gray-200 rounded-l-xl bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -270,7 +287,6 @@ const CheckoutPage = () => {
                   Delivery Method
                 </h2>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <button
                   onClick={() => setDeliveryMethod("fast")}
@@ -303,7 +319,6 @@ const CheckoutPage = () => {
                   </p>
                   <p className="text-lg font-bold text-gray-900">₹40</p>
                 </button>
-
                 <button
                   onClick={() => setDeliveryMethod("express")}
                   className={`p-6 rounded-2xl border-2 transition-all text-left ${
@@ -335,7 +350,6 @@ const CheckoutPage = () => {
                   </p>
                   <p className="text-lg font-bold text-gray-900">₹10</p>
                 </button>
-
                 <button
                   onClick={() => setDeliveryMethod("normal")}
                   className={`p-6 rounded-2xl border-2 transition-all text-left ${
@@ -379,7 +393,6 @@ const CheckoutPage = () => {
                   Shipping Address
                 </h2>
               </div>
-
               <div className="space-y-6">
                 <div className="relative">
                   <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
@@ -402,7 +415,6 @@ const CheckoutPage = () => {
                     </p>
                   )}
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <input
                     type="text"
@@ -428,6 +440,19 @@ const CheckoutPage = () => {
                   />
                   <input
                     type="text"
+                    value={formData.country}
+                    onChange={(e) =>
+                      handleInputChange("country", e.target.value)
+                    }
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                      formErrors.zipCode
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                    placeholder="Country"
+                  />
+                  <input
+                    type="text"
                     value={formData.zipCode}
                     onChange={(e) =>
                       handleInputChange("zipCode", e.target.value)
@@ -440,7 +465,6 @@ const CheckoutPage = () => {
                     placeholder="ZIP Code"
                   />
                 </div>
-
                 {(formErrors.city ||
                   formErrors.state ||
                   formErrors.zipCode) && (
@@ -470,7 +494,6 @@ const CheckoutPage = () => {
                   Payment Method
                 </h2>
               </div>
-
               <div className="space-y-6">
                 <div className="relative">
                   <CreditCard className="absolute left-3 top-6 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -497,7 +520,6 @@ const CheckoutPage = () => {
                     </p>
                   )}
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <input
@@ -548,7 +570,6 @@ const CheckoutPage = () => {
                     )}
                   </div>
                 </div>
-
                 <div className="flex items-start gap-3 pt-4">
                   <input
                     id="terms"
@@ -581,7 +602,6 @@ const CheckoutPage = () => {
                   {quantity} item{quantity > 1 ? "s" : ""}
                 </span>
               </div>
-
               <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl mb-6">
                 <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                   <img
@@ -602,7 +622,6 @@ const CheckoutPage = () => {
                   </p>
                 </div>
               </div>
-
               <div className="mb-6">
                 <div className="flex gap-2">
                   <input
@@ -611,21 +630,18 @@ const CheckoutPage = () => {
                     onChange={(e) => setDiscountCode(e.target.value)}
                     className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Discount code"
-                    disabled
                   />
                   <button
                     onClick={handleApplyDiscount}
-                    disabled
                     className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                   >
                     Apply
                   </button>
                 </div>
                 <p className="text-blue-600 text-sm mt-2">
-                  Discount currenlty not available Coming in future
+                  Discount currently not available Coming in future
                 </p>
               </div>
-
               <div className="space-y-3 pb-6 border-b border-gray-200">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
@@ -634,7 +650,7 @@ const CheckoutPage = () => {
                 {discountApplied && (
                   <div className="flex justify-between text-green-600">
                     <span>Discount ({discountCode})</span>
-                    <span>-₹{discount.toFixed(2)}</span>
+                    <span>-₹{discount.toFixed(1)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
@@ -642,7 +658,6 @@ const CheckoutPage = () => {
                   <span className="text-gray-900">+ ₹{shipping}</span>
                 </div>
               </div>
-
               <div className="pt-6 mb-6">
                 <div className="flex justify-between items-center">
                   <span className="text-xl font-semibold text-gray-900">
@@ -653,14 +668,12 @@ const CheckoutPage = () => {
                   </span>
                 </div>
               </div>
-
               <button
                 onClick={handlePayNow}
                 className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg"
               >
                 Pay Now →
               </button>
-
               <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mt-4">
                 <Lock className="w-4 h-4" />
                 <span>Secure Checkout - SSL Encrypted</span>
